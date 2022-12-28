@@ -37,3 +37,23 @@ end
 bisection(f, (-1.3, -1), tol)
 bisection(f, (1.5, 1.55), tol)
 ##
+
+##
+function newton_raphson(f, f′, x₀, tol, max_iter=1000)
+    x = x₀
+    iter = 0
+    for i ∈ 1:max_iter
+        iter += 1
+        x′ = x - f(x) / f′(x)
+        abs(x′ - x) < tol && return x′, iter
+        x = x′
+    end
+    throw(DomainError("Failed to converge after $max_iter iterations."))
+end
+##
+
+##
+newton_raphson(f, f′, -1.3, tol)
+newton_raphson(f, f′, 0.1, tol)
+newton_raphson(f, f′, 1.5, tol)
+##
