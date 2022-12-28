@@ -57,3 +57,22 @@ newton_raphson(f, f′, -1.3, tol)
 newton_raphson(f, f′, 0.1, tol)
 newton_raphson(f, f′, 1.5, tol)
 ##
+
+##
+function secant(f, x₀, x₁, tol, max_iter=1000)
+    iter = 0
+    for i ∈ 1:max_iter
+        iter += 1
+        x₂ = x₁ - f(x₁) * (x₁ - x₀) / (f(x₁) - f(x₀))
+        abs(x₂ - x₁) < tol && return x₂, iter
+        x₀, x₁ = x₁, x₂
+    end
+    throw(DomainError("Failed to converge after $max_iter iterations."))
+end
+##
+
+##
+secant(f, -1.5, -1.3, tol)
+secant(f, -0.1, 0.1, tol)
+secant(f, 1.4, 1.5, tol)
+##
