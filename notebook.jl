@@ -15,28 +15,12 @@ macro bind(def, element)
 end
 
 # ╔═╡ 33dc1ca0-86d6-11ed-3407-351f715da385
-using Plots, PlutoUI
+using LaTeXStrings, Plots, PlutoUI, Roots
 
-# ╔═╡ 2ae6ed03-2154-4dff-8375-9777f74462de
+# ╔═╡ d915fc41-891a-486e-8492-85533312d6b8
 begin
-	using Random: Xoshiro, rand
-	const rng = Xoshiro(123)
-	function modified_bisection(f, interval, tol)
-	    a, b = interval
-	    fₐ = f(a)
-	    fₐ * f(b) < 0 || throw(DomainError("The intermediate value theorem has to hold for the given interval"))
-	    iter = 0
-	    while abs(b - a) / 2 > tol
-	        iter += 1
-	        m = rand(rng)
-	        f(m) == 0 && return m, iter
-	        fₐ * f(m) < 0 ? b = m : a = m
-	    end
-		if !@isdefined(m)
-			m = rand(rng)
-		end
-	    m, iter
-	end
+	using Random
+	using Distributions
 end
 
 # ╔═╡ 92cbf0f6-d1f6-4b8b-8211-1cf421cf1d96
@@ -47,20 +31,31 @@ begin
 	const f′′(x) = 3ℯ^sin(x)^3 * sin(x) * ((3 * sin(x)^3 + 2) * cos(x)^2 - sin(x)^2) + 30x^4 - 24x^2 - 6x
 end
 
+# ╔═╡ a74c1ba9-4e21-4fb3-8dfe-deb4d2f75ba7
+begin
+	const find_zero_f = (x) -> find_zero(f, x)
+	const i = [(-1.5, -1), -0.01, (1.2, 1.6)]
+	const α = map(find_zero_f, i)
+end
+
 # ╔═╡ 8404282f-4467-4f8d-842d-1ccf284d55b7
-plot(f, -2, 2)
+begin
+	plot(f, -2, 2, label=L"\textbf{f(x)}")
+	hline!([0], label="y = 0", lw=0.7, ls=:dash, c=:red)
+	scatter!(α, map(f, α), label="roots", ms=3, mc=:orange)
+end
 
 # ╔═╡ d08a1bce-97cd-4fbf-83df-944c372aeb4e
-plot(f′, -2, 2)
+plot(f′, -2, 2, label=L"\textbf{f\prime(x)}")
 
 # ╔═╡ ddd26680-d652-47b3-a760-1b53c1e16d1b
-plot(f′′, -2, 2)
+plot(f′′, -2, 2, label=L"\textbf{f\prime\prime(x)}")
 
 # ╔═╡ a9641b53-4f35-4677-bc8f-5e68aa8d364f
 function bisection(f, interval, tol)
     a, b = interval
     fₐ = f(a)
-    fₐ * f(b) < 0 || throw(DomainError("The intermediate value theorem has to hold for the given interval"))
+    fₐ * f(b) < 0 || throw(DomainError("The Intermediate Value Theorem has to hold for the given interval"))
     iter = 0
     while abs(b - a) / 2 > tol
         iter += 1
@@ -153,6 +148,33 @@ begin
 	"""
 end
 
+# ╔═╡ 9f95c063-e621-4a18-8882-20330f45964c
+begin
+	const g(x) = 94cos(x)^3 - 24cos(x) + 177sin(x)^2 - 108sin(x)^4 - (72cos(x)^3)*sin(x)^2 - 65
+	const g′(x) = 6sin(x) * (-24cos(x)^4 + (36sin(x)^2 - 47) * cos(x)^2 + (59 - 72sin(x)^2) * cos(x) + 4)
+	const g′′(x) = -6 * (-72sin(x)^4 + 59sin(x)^2 + 24cos(x)^5 + (47 - 204sin(x)^2) * cos(x)^3 + (216sin(x)^2 - 59) * cos(x)^2 + (72sin(x)^4 - 94sin(x)^2 - 4) * cos(x))
+end
+
+# ╔═╡ 3ccaf30a-ab07-42cb-910e-adb642f948f1
+begin
+	const find_zero_g = (x) -> find_zero(g, x)
+	const j = [1.1, (2, 2.5)]
+	const β = map(find_zero_g, j)
+end
+
+# ╔═╡ ffff5610-03b1-4682-a566-da653bd4d2ff
+begin
+	plot(g, 0, 3, label=L"\textbf{g(x)}")
+	hline!([0], label="y = 0", lw=0.7, ls=:dash, c=:red)
+	scatter!(β, map(g, β), label="roots", ms=3, mc=:orange)
+end
+
+# ╔═╡ a9d7c422-5013-4e64-b162-a5d9583e37f0
+plot(g′, 0, 3, label=L"\textbf{g\prime(x)}")
+
+# ╔═╡ 50d4445e-65ad-4209-b673-3d2afb59f6ee
+plot(g′′, 0, 3, label=L"\textbf{g\prime\prime(x)}")
+
 # ╔═╡ 1280e05f-5c4b-4429-889a-e618e7f87733
 function modified_newton_raphson(f, f′, f′′, x₀, tol, max_iter=1000)
     x = x₀
@@ -166,14 +188,77 @@ function modified_newton_raphson(f, f′, f′′, x₀, tol, max_iter=1000)
     throw(DomainError("Failed to converge after $max_iter iterations."))
 end
 
+# ╔═╡ 2ae6ed03-2154-4dff-8375-9777f74462de
+begin
+	const rng = Xoshiro(123)
+	function modified_bisection(f, interval, tol)
+	    a, b = interval
+	    fₐ = f(a)
+		fₐ * f(b) < 0 || throw(DomainError("The Intermediate Value Theorem has to hold for the given interval"))
+	    iter = 0
+	    while abs(b - a) / 2 > tol
+	        iter += 1
+	        m = rand(rng, Uniform(a, b))
+	        f(m) == 0 && return m, iter
+	        fₐ * f(m) < 0 ? b = m : a = m
+	    end
+		if !@isdefined(m)
+			m = rand(rng, Uniform(a, b))
+		end
+	    m, iter
+	end
+end
+
+# ╔═╡ 32fff2b0-89c7-4f54-a2e2-0902348ec271
+function modified_secant(f, x, tol, max_iter=1000)
+	x₀, x₁, x₂ = x
+    iter = 0
+    for i ∈ 1:max_iter
+        iter += 1
+		q, r, s = f(x₀) / f(x₁), f(x₂) / f(x₁), f(x₂) / f(x₀)
+        x₃ = x₂ - (((r * (r - q) * (x₂ - x₁)) + ((1 - r) * s * (x₂ - x₀))) / ((q - 1) * (r - 1) * (s - 1)))
+        abs(x₃ - x₂) < tol && return x₃, iter
+        x₀, x₁, x₂ = x₁, x₂, x₃
+    end
+    throw(DomainError("Failed to converge after $max_iter iterations."))
+	x₀, x₁, x₂
+end
+
+# ╔═╡ e3bd85ef-8cab-4aac-a498-0a1964d60be6
+begin
+	_slider_html′(default) = Docs.HTML("""
+				<input type=range min=0 max=3 step=0.01 value=$(default) style='width: 20%;' oninput='this.nextElementSibling.value=this.value;'>
+				<output>$(default)</output>
+				""")
+	
+	tolF′ = @bind tol′ Slider([1e-5,1e-6,1e-7,1e-8,1e-9,1e-10], 1e-5, true)
+	aF′ = @bind a′ _slider_html′(2)
+	bF′ = @bind b′ _slider_html′(2.5)
+	x₀F′ = @bind x₀′ _slider_html′(1)
+	x₁F′ = @bind x₁′ _slider_html′(1.2)
+	x₂F′ = @bind x₂′ _slider_html′(1.1)
+
+	md"""
+	Parameters: \
+	Tolerance: $(tolF′) \
+	Interval lower bound: $(aF′) \
+	Interval upper bound: $(bF′) \
+	First guess: $(x₀F′) \
+	Second guess: $(x₁F′) \
+	Third guess: $(x₂F′)
+	"""
+end
+
 # ╔═╡ ae803f6e-e481-44a9-826f-5be13dbadade
 begin
-	resνₘ = modified_newton_raphson(f, f′, f′′, x₀, tol)
-	resβₘ = modified_bisection(f, (a, b), tol)
+	resνₘ = modified_newton_raphson(g, g′, g′′, x₀′, tol′)
+	resβₘ = modified_bisection(g, (a′, b′), tol′)
+	resσₘ = modified_secant(g, (x₀′, x₁′, x₂′), tol′)
 
 	md"""
 	The _modified Newton-Raphson_ method found root **$(resνₘ[1])** after **$(resνₘ[2])** iterations. \
-	The _modified Bisection_ method found root **$(resβₘ[1])** after **$(resβₘ[2])** iterations.
+	The _modified Bisection_ method found root **$(resβₘ[1])** after **$(resβₘ[2])** iterations. \
+	The _modified Secant_ method found root **$(resσₘ[1])** after **$(resσₘ[2])** iterations.
 	"""
 end
 
@@ -182,19 +267,26 @@ md"""
 Rounding with **$(tol)** precision: \
 \
 The _modified Newton-Raphson_ method found root **$(approx(resνₘ[1]))** after **$(resνₘ[2])** iterations. \
-The _modified Bisection_ method found root **$(approx(resβₘ[1]))** after **$(resβₘ[2])** iterations.
+The _modified Bisection_ method found root **$(approx(resβₘ[1]))** after **$(resβₘ[2])** iterations. \
+The _modified Secant_ method found root **$(approx(resσₘ[1]))** after **$(resσₘ[2])** iterations.
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 
 [compat]
+Distributions = "~0.25.79"
+LaTeXStrings = "~1.3.0"
 Plots = "~1.38.0"
 PlutoUI = "~0.7.49"
+Roots = "~2.0.8"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -203,7 +295,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.4"
 manifest_format = "2.0"
-project_hash = "8ce1cce6a49c1e619650139a339237be3c3c39cb"
+project_hash = "48be66b07e35137d238cef8852c596974e38b38a"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -237,6 +329,12 @@ deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jl
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
+
+[[deps.Calculus]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "f641eb0a4f00c343bbc32346e1217b86f3ce9dad"
+uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
+version = "0.5.1"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
@@ -280,6 +378,11 @@ git-tree-sha1 = "fc08e5930ee9a4e03f84bfb5211cb54e7769758a"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.12.10"
 
+[[deps.CommonSolve]]
+git-tree-sha1 = "9441451ee712d1aec22edad62db1a9af3dc8d852"
+uuid = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
+version = "0.2.3"
+
 [[deps.Compat]]
 deps = ["Dates", "LinearAlgebra", "UUIDs"]
 git-tree-sha1 = "00a2cccc7f098ff3b66806862d275ca3db9e6e5a"
@@ -290,6 +393,12 @@ version = "4.5.0"
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "1.0.1+0"
+
+[[deps.ConstructionBase]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "fb21ddd70a051d882a1686a5a550990bbe371a95"
+uuid = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
+version = "1.4.1"
 
 [[deps.Contour]]
 git-tree-sha1 = "d05d9e7b7aedff4e5b51a029dced05cfb6125781"
@@ -315,6 +424,18 @@ uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 deps = ["Mmap"]
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
+[[deps.DensityInterface]]
+deps = ["InverseFunctions", "Test"]
+git-tree-sha1 = "80c3e8639e3353e5d2912fb3a1916b8455e2494b"
+uuid = "b429d917-457f-4dbc-8f4c-0cc954292b1d"
+version = "0.4.0"
+
+[[deps.Distributions]]
+deps = ["ChainRulesCore", "DensityInterface", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
+git-tree-sha1 = "a7756d098cbabec6b3ac44f369f74915e8cfd70a"
+uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
+version = "0.25.79"
+
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
 git-tree-sha1 = "2fb1e02f2b635d0845df5d7c167fec4dd739b00d"
@@ -325,6 +446,12 @@ version = "0.9.3"
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 version = "1.6.0"
+
+[[deps.DualNumbers]]
+deps = ["Calculus", "NaNMath", "SpecialFunctions"]
+git-tree-sha1 = "5837a837389fccf076445fce071c8ddaea35a566"
+uuid = "fa6b7ba4-c1ee-5f82-b5fc-ecf0adba8f74"
+version = "0.6.8"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -346,6 +473,12 @@ version = "4.4.2+2"
 
 [[deps.FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
+
+[[deps.FillArrays]]
+deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
+git-tree-sha1 = "9a0472ec2f5409db243160a8b030f94c380167a3"
+uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
+version = "0.13.6"
 
 [[deps.FixedPointNumbers]]
 deps = ["Statistics"]
@@ -376,6 +509,10 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "aa31987c2ba8704e23c6c8ba8a4f769d5d7e4f91"
 uuid = "559328eb-81f9-559d-9380-de523a88c83c"
 version = "1.0.10+0"
+
+[[deps.Future]]
+deps = ["Random"]
+uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[deps.GLFW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pkg", "Xorg_libXcursor_jll", "Xorg_libXi_jll", "Xorg_libXinerama_jll", "Xorg_libXrandr_jll"]
@@ -429,6 +566,12 @@ deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll",
 git-tree-sha1 = "129acf094d168394e80ee1dc4bc06ec835e510a3"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
 version = "2.8.1+1"
+
+[[deps.HypergeometricFunctions]]
+deps = ["DualNumbers", "LinearAlgebra", "OpenLibm_jll", "SpecialFunctions", "Test"]
+git-tree-sha1 = "709d864e3ed6e3545230601f94e11ebc65994641"
+uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
+version = "0.3.11"
 
 [[deps.Hyperscript]]
 deps = ["Test"]
@@ -714,6 +857,12 @@ deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
 version = "10.40.0+0"
 
+[[deps.PDMats]]
+deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
+git-tree-sha1 = "cf494dca75a69712a72b80bc48f59dcf3dea63ec"
+uuid = "90014a1f-27ba-587c-ab20-58faa44d9150"
+version = "0.11.16"
+
 [[deps.Parsers]]
 deps = ["Dates", "SnoopPrecompile"]
 git-tree-sha1 = "6466e524967496866901a78fca3f2e9ea445a559"
@@ -776,6 +925,12 @@ git-tree-sha1 = "0c03844e2231e12fda4d0086fd7cbe4098ee8dc5"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
 version = "5.15.3+2"
 
+[[deps.QuadGK]]
+deps = ["DataStructures", "LinearAlgebra"]
+git-tree-sha1 = "97aa253e65b784fd13e83774cadc95b38011d734"
+uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
+version = "2.6.0"
+
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
@@ -813,6 +968,24 @@ git-tree-sha1 = "838a3a4188e2ded87a4f9f184b4b0d78a1e91cb7"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "1.3.0"
 
+[[deps.Rmath]]
+deps = ["Random", "Rmath_jll"]
+git-tree-sha1 = "bf3188feca147ce108c76ad82c2792c57abe7b1f"
+uuid = "79098fc4-a85e-5d69-aa6a-4863f24498fa"
+version = "0.7.0"
+
+[[deps.Rmath_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "68db32dff12bb6127bac73c209881191bf0efbb7"
+uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
+version = "0.3.0+0"
+
+[[deps.Roots]]
+deps = ["ChainRulesCore", "CommonSolve", "Printf", "Setfield"]
+git-tree-sha1 = "a3db467ce768343235032a1ca0830fc64158dadf"
+uuid = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+version = "2.0.8"
+
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 version = "0.7.0"
@@ -825,6 +998,12 @@ version = "1.1.1"
 
 [[deps.Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
+
+[[deps.Setfield]]
+deps = ["ConstructionBase", "Future", "MacroTools", "StaticArraysCore"]
+git-tree-sha1 = "e2cc6d8c88613c05e1defb55170bf5ff211fbeac"
+uuid = "efcf1570-3423-57d1-acb7-fd33fddbac46"
+version = "1.1.1"
 
 [[deps.Showoff]]
 deps = ["Dates", "Grisu"]
@@ -861,6 +1040,11 @@ git-tree-sha1 = "d75bda01f8c31ebb72df80a46c88b25d1c79c56d"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
 version = "2.1.7"
 
+[[deps.StaticArraysCore]]
+git-tree-sha1 = "6b7ba252635a5eff6a0b0664a41ee140a1c9e72a"
+uuid = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
+version = "1.4.0"
+
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -876,6 +1060,16 @@ deps = ["DataAPI", "DataStructures", "LinearAlgebra", "LogExpFunctions", "Missin
 git-tree-sha1 = "d1bf48bfcc554a3761a133fe3a9bb01488e06916"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 version = "0.33.21"
+
+[[deps.StatsFuns]]
+deps = ["ChainRulesCore", "HypergeometricFunctions", "InverseFunctions", "IrrationalConstants", "LogExpFunctions", "Reexport", "Rmath", "SpecialFunctions"]
+git-tree-sha1 = "ab6083f09b3e617e34a956b43e9d51b824206932"
+uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
+version = "1.1.1"
+
+[[deps.SuiteSparse]]
+deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
+uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
 [[deps.TOML]]
 deps = ["Dates"]
@@ -1165,6 +1359,7 @@ version = "1.4.1+0"
 # ╔═╡ Cell order:
 # ╠═33dc1ca0-86d6-11ed-3407-351f715da385
 # ╠═92cbf0f6-d1f6-4b8b-8211-1cf421cf1d96
+# ╠═a74c1ba9-4e21-4fb3-8dfe-deb4d2f75ba7
 # ╠═8404282f-4467-4f8d-842d-1ccf284d55b7
 # ╠═d08a1bce-97cd-4fbf-83df-944c372aeb4e
 # ╠═ddd26680-d652-47b3-a760-1b53c1e16d1b
@@ -1175,8 +1370,16 @@ version = "1.4.1+0"
 # ╟─bab5af34-d930-4dd8-8178-e4628d8ce08b
 # ╟─7c0400d2-ec15-45d3-9bb4-4f3f0c77c791
 # ╟─3ad04fc0-5878-4759-adc0-ab4535b101f3
+# ╠═9f95c063-e621-4a18-8882-20330f45964c
+# ╠═3ccaf30a-ab07-42cb-910e-adb642f948f1
+# ╠═ffff5610-03b1-4682-a566-da653bd4d2ff
+# ╠═a9d7c422-5013-4e64-b162-a5d9583e37f0
+# ╠═50d4445e-65ad-4209-b673-3d2afb59f6ee
 # ╠═1280e05f-5c4b-4429-889a-e618e7f87733
+# ╠═d915fc41-891a-486e-8492-85533312d6b8
 # ╠═2ae6ed03-2154-4dff-8375-9777f74462de
+# ╠═32fff2b0-89c7-4f54-a2e2-0902348ec271
+# ╟─e3bd85ef-8cab-4aac-a498-0a1964d60be6
 # ╟─ae803f6e-e481-44a9-826f-5be13dbadade
 # ╟─3bf2b770-c4da-4fb6-bd2c-741c2ecac970
 # ╟─00000000-0000-0000-0000-000000000001
