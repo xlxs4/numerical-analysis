@@ -21,10 +21,17 @@ using Plots, PlutoUI
 begin
 	f(x) = ℯ^sin(x)^3 + x^6 - 2x^4 - x^3 - 1
 	f′(x) = 3sin(x)^2 * cos(x) * log(ℯ)ℯ^sin(x)^3 + 6x^5 - 8x^3 - 3x^2
+	f′′(x) = 3ℯ^sin(x)^3 * sin(x) * ((3 * sin(x)^3 + 2) * cos(x)^2 - sin(x)^2) + 30x^4 - 24x^2 - 6x
 end
 
 # ╔═╡ 8404282f-4467-4f8d-842d-1ccf284d55b7
 plot(f, -2, 2)
+
+# ╔═╡ d08a1bce-97cd-4fbf-83df-944c372aeb4e
+plot(f′, -2, 2)
+
+# ╔═╡ ddd26680-d652-47b3-a760-1b53c1e16d1b
+plot(f′′, -2, 2)
 
 # ╔═╡ a9641b53-4f35-4677-bc8f-5e68aa8d364f
 function bisection(f, interval, tol)
@@ -32,7 +39,7 @@ function bisection(f, interval, tol)
     fₐ = f(a)
     fₐ * f(b) < 0 || throw(DomainError("The intermediate value theorem has to hold for the given interval"))
     iter = 0
-    while (b - a) / 2 > tol
+    while abs(b - a) / 2 > tol
         iter += 1
         m = (a + b) / 2
         f(m) == 0 && return m
@@ -75,16 +82,16 @@ end
 
 # ╔═╡ bab5af34-d930-4dd8-8178-e4628d8ce08b
 begin
-	_slider_html = html"""
-				<input type=range min=-2 max=2 step=0.01 value=0 style='width: 20%;' oninput='this.nextElementSibling.value=this.value;'>
-				<output>0</output>
-				"""
+	_slider_html(default) = Docs.HTML("""
+				<input type=range min=-2 max=2 step=0.01 value=$(default) style='width: 20%;' oninput='this.nextElementSibling.value=this.value;'>
+				<output>$(default)</output>
+				""")
 
 	tolF = @bind tol Slider([1e-5,1e-6,1e-7,1e-8,1e-9,1e-10], 1e-5, true)
-	x₀F = @bind x₀ _slider_html
-	x₁F = @bind x₁ _slider_html
-	aF = @bind a _slider_html
-	bF = @bind b _slider_html
+	aF = @bind a _slider_html(-0.2)
+	bF = @bind b _slider_html(-1.87)
+	x₀F = @bind x₀ _slider_html(0.93)
+	x₁F = @bind x₁ _slider_html(1.65)
 
 	md"""
 	Parameters: \
@@ -122,6 +129,35 @@ begin
 	You can use ≈ or isapprox to check if an approximated root is close enough to the actual root.
 	"""
 end
+
+# ╔═╡ 1280e05f-5c4b-4429-889a-e618e7f87733
+function modified_newton_raphson(f, f′, f′′, x₀, tol, max_iter=1000)
+    x = x₀
+    iter = 0
+    for i ∈ 1:max_iter
+        iter += 1
+        x′ = x - (1 / ((f′(x) / f(x)) - (f′′(x) \ 2f′(x))))
+        abs(x′ - x) < tol && return x′, iter
+        x = x′
+    end
+    throw(DomainError("Failed to converge after $max_iter iterations."))
+end
+
+# ╔═╡ ae803f6e-e481-44a9-826f-5be13dbadade
+begin
+	resνₘ = modified_newton_raphson(f, f′, f′′, x₀, tol)
+
+	md"""
+	The _modified Newton-Raphson_ method found root **$(resνₘ[1])** after **$(resνₘ[2])** iterations. \
+	"""
+end
+
+# ╔═╡ 3bf2b770-c4da-4fb6-bd2c-741c2ecac970
+md"""
+Rounding with **$(tol)** precision: \
+\
+The _modified Newton-Raphson_ method found root **$(approx(resνₘ[1]))** after **$(resνₘ[2])** iterations.
+"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -170,7 +206,7 @@ uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
 version = "1.0.8+0"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
@@ -1103,6 +1139,8 @@ version = "1.4.1+0"
 # ╠═33dc1ca0-86d6-11ed-3407-351f715da385
 # ╠═92cbf0f6-d1f6-4b8b-8211-1cf421cf1d96
 # ╠═8404282f-4467-4f8d-842d-1ccf284d55b7
+# ╠═d08a1bce-97cd-4fbf-83df-944c372aeb4e
+# ╠═ddd26680-d652-47b3-a760-1b53c1e16d1b
 # ╠═a9641b53-4f35-4677-bc8f-5e68aa8d364f
 # ╠═183fbda4-92ed-4429-acc4-6785d22a5506
 # ╠═343e2aa0-db02-4c16-979c-25ddd538dae0
@@ -1110,5 +1148,8 @@ version = "1.4.1+0"
 # ╟─bab5af34-d930-4dd8-8178-e4628d8ce08b
 # ╟─7c0400d2-ec15-45d3-9bb4-4f3f0c77c791
 # ╟─3ad04fc0-5878-4759-adc0-ab4535b101f3
+# ╠═1280e05f-5c4b-4429-889a-e618e7f87733
+# ╟─ae803f6e-e481-44a9-826f-5be13dbadade
+# ╟─3bf2b770-c4da-4fb6-bd2c-741c2ecac970
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
