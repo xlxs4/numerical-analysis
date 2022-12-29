@@ -17,11 +17,34 @@ end
 # ╔═╡ 33dc1ca0-86d6-11ed-3407-351f715da385
 using Plots, PlutoUI
 
+# ╔═╡ 2ae6ed03-2154-4dff-8375-9777f74462de
+begin
+	using Random: Xoshiro, rand
+	const rng = Xoshiro(123)
+	function modified_bisection(f, interval, tol)
+	    a, b = interval
+	    fₐ = f(a)
+	    fₐ * f(b) < 0 || throw(DomainError("The intermediate value theorem has to hold for the given interval"))
+	    iter = 0
+	    while abs(b - a) / 2 > tol
+	        iter += 1
+	        m = rand(rng)
+	        f(m) == 0 && return m, iter
+	        fₐ * f(m) < 0 ? b = m : a = m
+	    end
+		if !@isdefined(m)
+			m = rand(rng)
+		end
+	    m, iter
+	end
+end
+
 # ╔═╡ 92cbf0f6-d1f6-4b8b-8211-1cf421cf1d96
 begin
-	f(x) = ℯ^sin(x)^3 + x^6 - 2x^4 - x^3 - 1
-	f′(x) = 3sin(x)^2 * cos(x) * log(ℯ)ℯ^sin(x)^3 + 6x^5 - 8x^3 - 3x^2
-	f′′(x) = 3ℯ^sin(x)^3 * sin(x) * ((3 * sin(x)^3 + 2) * cos(x)^2 - sin(x)^2) + 30x^4 - 24x^2 - 6x
+	const f(x) = ℯ^sin(x)^3 + x^6 - 2x^4 - x^3 - 1
+	# You can use the Symbolics.jl CAS for symbolic differentiation.
+	const f′(x) = 3sin(x)^2 * cos(x) * log(ℯ)ℯ^sin(x)^3 + 6x^5 - 8x^3 - 3x^2
+	const f′′(x) = 3ℯ^sin(x)^3 * sin(x) * ((3 * sin(x)^3 + 2) * cos(x)^2 - sin(x)^2) + 30x^4 - 24x^2 - 6x
 end
 
 # ╔═╡ 8404282f-4467-4f8d-842d-1ccf284d55b7
@@ -42,7 +65,7 @@ function bisection(f, interval, tol)
     while abs(b - a) / 2 > tol
         iter += 1
         m = (a + b) / 2
-        f(m) == 0 && return m
+        f(m) == 0 && return m, iter
         fₐ * f(m) < 0 ? b = m : a = m
     end
     (a + b) / 2, iter
@@ -146,9 +169,11 @@ end
 # ╔═╡ ae803f6e-e481-44a9-826f-5be13dbadade
 begin
 	resνₘ = modified_newton_raphson(f, f′, f′′, x₀, tol)
+	resβₘ = modified_bisection(f, (a, b), tol)
 
 	md"""
 	The _modified Newton-Raphson_ method found root **$(resνₘ[1])** after **$(resνₘ[2])** iterations. \
+	The _modified Bisection_ method found root **$(resβₘ[1])** after **$(resβₘ[2])** iterations.
 	"""
 end
 
@@ -156,7 +181,8 @@ end
 md"""
 Rounding with **$(tol)** precision: \
 \
-The _modified Newton-Raphson_ method found root **$(approx(resνₘ[1]))** after **$(resνₘ[2])** iterations.
+The _modified Newton-Raphson_ method found root **$(approx(resνₘ[1]))** after **$(resνₘ[2])** iterations. \
+The _modified Bisection_ method found root **$(approx(resβₘ[1]))** after **$(resβₘ[2])** iterations.
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -164,6 +190,7 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
 Plots = "~1.38.0"
@@ -176,7 +203,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.4"
 manifest_format = "2.0"
-project_hash = "ade82845dc0c4b4a96b80b7005ea142c361bab74"
+project_hash = "8ce1cce6a49c1e619650139a339237be3c3c39cb"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -1149,6 +1176,7 @@ version = "1.4.1+0"
 # ╟─7c0400d2-ec15-45d3-9bb4-4f3f0c77c791
 # ╟─3ad04fc0-5878-4759-adc0-ab4535b101f3
 # ╠═1280e05f-5c4b-4429-889a-e618e7f87733
+# ╠═2ae6ed03-2154-4dff-8375-9777f74462de
 # ╟─ae803f6e-e481-44a9-826f-5be13dbadade
 # ╟─3bf2b770-c4da-4fb6-bd2c-741c2ecac970
 # ╟─00000000-0000-0000-0000-000000000001
